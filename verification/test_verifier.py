@@ -153,6 +153,15 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(bridge.closure(self.config, ["Unconditional.Test"]),
                          {"Unconditional.Test": {"Unconditional.Child"}, "Unconditional.Child": set()})
 
+    def test_unlisted_overlay_cannot_replace_pinned_source(self):
+        module = "MyLeanRepo.Example"
+        shadow = bridge.OVERLAY / "MyLeanRepo/Example.lean"
+        shadow.parent.mkdir(parents=True)
+        shadow.write_text("def changed := True\n")
+        selected, base = bridge.source(self.config, module)
+        self.assertEqual(selected, self.upstream / "MyLeanRepo/Example.lean")
+        self.assertEqual(base, self.upstream)
+
     def test_external_kakeya_and_private_fragment_invalidate_receipt(self):
         path = self.project / "Unconditional/Test.lean"
         path.parent.mkdir()

@@ -24,6 +24,7 @@ OVERLAY = STATE / "compatibility"
 LOCK = json.loads((ROOT / "bridge-lock.json").read_text())
 PACKAGES = json.loads((ROOT / "dependency-lock.json").read_text())["packages"]
 PATCHES = json.loads((ROOT / "compatibility/patches.json").read_text())
+PATCH_MODULES = {patch["module"] for patch in PATCHES}
 IMPORT = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([^\n]+)", re.M)
 
 
@@ -117,7 +118,7 @@ def environment(config):
 def source(config, module):
     relative = Path(module.replace(".", "/") + ".lean")
     overlay = OVERLAY / relative
-    if overlay.exists():
+    if module in PATCH_MODULES and overlay.exists():
         return overlay, OVERLAY
     namespace = module.split(".")[0]
     base = {"Unconditional": Path(config["numina"]),

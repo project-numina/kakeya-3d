@@ -1,0 +1,195 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+
+version: "v0.4"
+
+project:
+  name: "Kakeya in Dimension Three"
+  description: >-
+    A Lean 4 formalization of the three-dimensional Kakeya conjecture following
+    Guth, Wang, and Zahl. The main theorem carries the three-dimensional Sticky
+    Frostman hypothesis as an explicit argument, and a linking library discharges
+    that hypothesis against a second, independent development, giving an
+    unconditional endpoint.
+  authors:
+    - "Project Numina contributors"
+  responsible_maintainers:
+    - "Project Numina"
+  license: "Apache-2.0"
+
+sources:
+  - title: "A streamlined proof of the Kakeya set conjecture in ℝ³"
+    authors:
+      - "Larry Guth"
+      - "Hong Wang"
+      - "Joshua Zahl"
+    id: "https://arxiv.org/abs/2601.14411"
+    type: "article"
+    location: "Theorem 1.1 and its proof"
+    relationship: "formalizes"
+    note: >-
+      Hong Wang, one of the authors, endorsed this formalization. The remaining
+      authors were not contacted.
+    author_endorsement: "endorsed"
+
+  - title: >-
+      Volume estimates for unions of convex sets, and the Kakeya set
+      conjecture in three dimensions
+    authors:
+      - "Hong Wang"
+      - "Joshua Zahl"
+    id: "https://arxiv.org/abs/2502.17655"
+    type: "article"
+    relationship: "background"
+    note: >-
+      Hong Wang, one of the authors, endorsed this formalization. The remaining
+      authors were not contacted.
+    author_endorsement: "endorsed"
+
+  - title: "The Assouad dimension of Kakeya sets in ℝ³"
+    authors:
+      - "Hong Wang"
+      - "Joshua Zahl"
+    id: "https://arxiv.org/abs/2401.12337"
+    type: "article"
+    location: >-
+      Theorem 5.2, which Guth-Wang-Zahl record as Theorem 7.3(A) of the
+      streamlined paper
+    relationship: "background"
+    note: >-
+      This theorem is proved in the cited literature and is not formalized in
+      this repository. The main Lean theorem carries its three-dimensional
+      Sticky Frostman formulation as an explicit hypothesis; the repository does
+      not declare it as an axiom. The hypothesis is discharged by the linking
+      library against a second development that formalizes this theorem. Hong
+      Wang, one of the authors, endorsed this formalization; the remaining
+      authors were not contacted.
+    author_endorsement: "endorsed"
+
+  - title: "Sticky Kakeya sets and the sticky Kakeya conjecture"
+    authors:
+      - "Hong Wang"
+      - "Joshua Zahl"
+    id: "https://arxiv.org/abs/2210.09581"
+    type: "article"
+    relationship: "background"
+    note: >-
+      Hong Wang, one of the authors, endorsed this formalization. The remaining
+      authors were not contacted.
+    author_endorsement: "endorsed"
+
+classification:
+  arxiv:
+    - "math.CA"
+    - "math.MG"
+  msc2020:
+    - "28A75"
+    - "42B25"
+    - "52C17"
+
+related_formalizations:
+  - id: "https://github.com/M32026/3d-sticky-kakeya"
+    relationship: "independent"
+    note: >-
+      A Lean 4 development by Nankai University and the ByteDance Seed AI4Math
+      Team, written independently of this one. It proves Wang-Zahl, The Assouad
+      dimension of Kakeya sets in R^3, Theorem 5.2 unconditionally -- the
+      estimate this repository's main theorem assumes -- and states, without
+      proving, the two Main Lemmas that this repository proves. The two
+      developments are complementary and are linked in the Unconditional
+      library of this repository, which derives the three-dimensional Sticky
+      Frostman hypothesis from that unconditional Theorem 5.2. That development
+      is not vendored here; it is obtained separately at the revision recorded
+      in verification/unconditional/bridge-lock.json.
+
+status:
+  scope: >-
+    Proves that the three-dimensional Sticky Frostman hypothesis implies the
+    three-dimensional Kakeya set conjecture, and discharges that hypothesis
+    against a second development to obtain the conjecture unconditionally.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms:
+    - "propext"
+    - "Classical.choice"
+    - "Quot.sound"
+  main_results:
+    - declaration: "KakeyaDimensionThree"
+      file: "Kakeya/DimensionThree/KakeyaConjecture.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
+      comparator_config: "verification/comparator/config.json"
+      literature_dependencies:
+        - statement: "The three-dimensional Sticky Frostman hypothesis"
+          source: "The Assouad dimension of Kakeya sets in ℝ³"
+    - declaration: "KakeyaDimensionThree_of_pureWZ2"
+      file: "Unconditional/KakeyaConjecture.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
+      comparator_config: "verification/comparator/config-unconditional.json"
+      literature_dependencies: []
+
+automation:
+  methods:
+    - method: "agent"
+      framework: "Project Numina Fuse"
+      tool_setup: >-
+        Agent-guided Lean 4 development with human review and repository-level
+        build, source, axiom, and comparator checks.
+  notes: >-
+    The development was assembled from Project Numina's Kakeya formalization;
+    provenance and source revisions are recorded in ATTRIBUTION.md.
+
+fidelity:
+  divergences: >-
+    (1) The main theorem explicitly assumes the three-dimensional Sticky
+    Frostman hypothesis, whose proof is not formalized here; it is carried as an
+    explicit argument rather than declared as an axiom. The unconditional
+    endpoint discharges it against a second development, which is not vendored
+    here and must be obtained separately. See PROOF-PATH.md for the exact formal
+    statement and dependency chain.
+    (2) Main Lemma 1 is deliberately not sharp: it yields the Frostman estimate
+    at every exponent strictly above beta, never at beta itself, and the
+    bootstrap pays for this by halving the step of Main Lemma 2.
+    (3) Kakeya.katzTaoEstimateDimensionThree, KakeyaEstimateDimensionThree_pos
+    and KakeyaEstimateDimensionThree are stated for index types in Type 0; Main
+    Lemma 1 and Main Lemma 2 remain polymorphic in the index universe.
+    (4) The ENNReal volume bounds of the sticky predicates use ENNReal.ofReal
+    applied to real powers; no equivalence to variants using ENNReal.ofNNReal is
+    claimed.
+    (5) The every-scale conditions are read on the nodes of one nested cover
+    hierarchy, following Wang-Zahl Definition 2.1, rather than on thickenings of
+    the leaves.
+
+review:
+  status: "self-assessed"
+  reviewers: []
+  notes: >-
+    The repository includes automated source, build, axiom, and comparator
+    checks. No claim of external peer review is made.
+
+alignment:
+  namespace: "Kakeya"
+  statements:
+    - source: "Three-dimensional Kakeya set conjecture"
+      lean: "KakeyaDimensionThree"
+      module: "Kakeya.DimensionThree.KakeyaConjecture"
+      status: "proved"
+    - source: "Three-dimensional Sticky Frostman hypothesis"
+      lean: "StickyKakeya.StickyFrostmanHypothesis"
+      module: "Kakeya.Sticky"
+      status: "literature-dependency"
+    - source: "Three-dimensional Kakeya set conjecture, unconditionally"
+      lean: "KakeyaDimensionThree_of_pureWZ2"
+      module: "Unconditional.KakeyaConjecture"
+      status: "proved"
+
+acknowledgements: >-
+  The mathematical argument is due to Larry Guth, Hong Wang, and Joshua Zahl.
+  Project acknowledgements and source attribution are recorded in README.md and
+  ATTRIBUTION.md.

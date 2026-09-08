@@ -1,0 +1,8 @@
+/.lake/
+/.verify-work/
+/.verification-results/
+__pycache__/
+*.pyc
+
+/upstream/
+/verification/unconditional/.bridge/

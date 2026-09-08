@@ -1,0 +1,9 @@
+{
+  "toolchain": "leanprover/lean4:v4.32.0-rc1",
+  "bytedance_commit": "42f739b484fd055e0aa29601c35677ad996f2ef2",
+  "mathlib_commit": "1b0782d8191b03e0001caac10e1601d17f2cd580",
+  "numina_manifest_sha256": "67bbc3bdc4691e6e36325c7688e5d71dbbcf3f685e87bd94b059eb4d725f39f6",
+  "default_modules": [
+    "Unconditional"
+  ]
+}

@@ -1,0 +1,10 @@
+name = "kakeya_comparator"
+version = "0.1.0"
+defaultTargets = ["Challenge", "Solution"]
+
+[[lean_lib]]
+name = "Challenge"
+
+[[lean_lib]]
+name = "Solution"
+

@@ -1,0 +1,75 @@
+/-
+Copyright (c) 2026 Project Numina. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Numina Team
+-/
+
+import Unconditional.GeometryAdapters
+import Unconditional.ScaleParameters
+import Unconditional.NuminaAnalytic
+import Unconditional.JointColoredSelection
+import Unconditional.SparseGridSchedule
+import Unconditional.CoaxialContainment
+import Unconditional.CoaxialEnvelope
+import Unconditional.CoaxialJohnTransfer
+import Unconditional.SharedChildGeometry
+import Unconditional.SharedChildPacking
+import Unconditional.ReanchoredParentEnclosure
+import Unconditional.ReanchoredParentDegree
+import Unconditional.ReanchoredPartitioning
+import Unconditional.CoaxialFineColoring
+import Unconditional.NuminaCoarseRepresentatives
+import Unconditional.SpatialLocalization
+import Unconditional.DirectConversionStatement
+import Unconditional.AmbientTransport
+import Unconditional.JointGeometricDefinitions
+import Unconditional.NuminaJointDefinitions
+import Unconditional.SelectionPolylog
+import Unconditional.IndexedSelection
+import Unconditional.JointColorAdapter
+import Unconditional.ReanchoredParentVolume
+import Unconditional.NuminaReanchoredGeometry
+import Unconditional.NuminaActiveParents
+import Unconditional.ScaleToOrdinaryCWA
+import Unconditional.BodyCWAToJohn
+import Unconditional.SingleParentScale
+import Unconditional.CoaxialFixedSupport
+import Unconditional.ConversionLogAbsorption
+import Unconditional.DirectConversionAssembly
+import Unconditional.PairedParentSelection
+import Unconditional.JointLocalizedRefinement
+import Unconditional.NuminaJointCore
+import Unconditional.CentringDenseShading
+import Unconditional.BalancedQuotientSelection
+import Unconditional.BalancedQuotientFrostman
+import Unconditional.CentringCommonChord
+import Unconditional.CenteredCoarseIncidence
+import Unconditional.RelativeWeightedCore
+import Unconditional.MergedClassFrostman
+import Unconditional.FiniteParentRecords
+import Unconditional.CenteredUnitParent
+import Unconditional.WeightedTupleSelection
+import Unconditional.AtomCorePullback
+import Unconditional.FiniteParentProducers
+import Unconditional.FiniteJointGeometry
+import Unconditional.AtomMassFrostman
+import Unconditional.CoarseParentSupport
+import Unconditional.OriginalAtomCoding
+import Unconditional.BallThreeCenteredCover
+import Unconditional.GridCenteredParentCover
+import Unconditional.BalancedOriginalAtomSelection
+import Unconditional.OriginalAtomProjection
+import Unconditional.AtomWeightLevel
+import Unconditional.GeometricAtomInput
+import Unconditional.RestoredFineSupport
+import Unconditional.FiniteParentPreparation
+import Unconditional.DirectConversion
+import Unconditional.StickyFrostman
+import Unconditional.KakeyaConjecture
+
+/-!
+# Unconditional
+
+Part of the linking layer that discharges
+`StickyKakeya.StickyFrostmanHypothesis`.
+-/

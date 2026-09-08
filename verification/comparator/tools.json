@@ -1,0 +1,13 @@
+{
+  "toolchain": "leanprover/lean4:v4.32.0-rc1",
+  "comparator": {
+    "url": "https://github.com/leanprover/comparator",
+    "tag": "v4.32.0-rc1",
+    "commit": "1b82ba006811f7e25d53858252372e4d85fd3921",
+    "manifest_sha256": "7375e1fcd4c7d15fae836ac190ea50ba29dd070a56007a5e6e07cbdf23729153"
+  },
+  "dependencies": {
+    "lean4export": "3de59f10bc4b4a0f2de698597aeb1246caa0df0a",
+    "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5"
+  }
+}

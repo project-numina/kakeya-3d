@@ -1,0 +1,37 @@
+[
+  {
+    "module": "MyLeanRepo.SphericalIntegral",
+    "source_sha256": "5e540a9b375a12871a1c87fe4abebbbfd71bf63379d8684529ede2a044689832",
+    "output_sha256": "ff5a440a743e356a562cc3fd6f0a37f1df18216a5a3f539b68cf5353bcacf7f8",
+    "anchor": "@[expose] public section\n\n",
+    "insert": "local notation \"NoAtoms\" => MeasureTheory.NullSingletonClass\nlocal notation \"Measure.IsAddHaarMeasure.noAtoms\" =>\n  MeasureTheory.Measure.IsAddHaarMeasure.nullSingletonClass\n\n"
+  },
+  {
+    "module": "MyLeanRepo.DiscretisedFurstenbergEstimate.PotentialTheory",
+    "source_sha256": "dc28242094c57e52f891191827c908f2f47c0529f25567e3bf317651f7b3ebdf",
+    "output_sha256": "b2eb4f55eefecebcbef2494aa11a82f164db90bdf93540c2bc3ab9923f744954",
+    "anchor": "@[expose] public section\n\n",
+    "insert": "local notation \"NoAtoms\" => MeasureTheory.NullSingletonClass\nlocal notation \"MeasureTheory.NoAtoms\" => MeasureTheory.NullSingletonClass\n\n"
+  },
+  {
+    "module": "MyLeanRepo.Kakeya.BorsukUlam.QuotientSES",
+    "source_sha256": "d81a58a7d6572516c6b9e173a4254628c4c2a1442231e18f687e478c696dfdbf",
+    "output_sha256": "5830728b33042780ecd1895c13dceb8688717166a428390bf543a039de744e90",
+    "anchor": "import Mathlib.Topology.Homotopy.Lifting\n\n",
+    "insert": "local notation \"LocPathConnectedSpace\" => LocallyPathConnectedSpace\n\n"
+  },
+  {
+    "module": "MyLeanRepo.Kakeya.CV.Isoperimetric.Perimeter.IntersectionBallHelpers",
+    "source_sha256": "dd018b4e5ae6cbb987ef56a6be9f6c6f644aa2a27b3f78b00bc04f2b4a3267b8",
+    "output_sha256": "98d14ac0aa6828b8ff889a302753405d8888c6d3d52931587e7a5f341cac90d0",
+    "anchor": "open MeasureTheory Metric Set ENNReal Filter\n",
+    "insert": "local notation \"NoAtoms\" => MeasureTheory.NullSingletonClass\n"
+  },
+  {
+    "module": "MyLeanRepo.Kakeya.BorsukUlam.Vendored.AlgebraicTopology.SingularHomology.HomologyZeroPathComponents",
+    "source_sha256": "3a95467551a46f3fb4a5a965f6de14eb0905588f22812d6ba684b8f74260d418",
+    "output_sha256": "b0cb8c9cd4667f41f4978f740945be971a9c2f9b55a05ade6a86760d8c8bb7b5",
+    "anchor": "@[expose] public section\n\n",
+    "insert": "local notation \"LocPathConnectedSpace\" => LocallyPathConnectedSpace\n\n"
+  }
+]

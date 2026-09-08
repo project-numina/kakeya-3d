@@ -1,0 +1,83 @@
+/-
+Copyright (c) 2026 Project Numina. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Numina Team
+-/
+
+module
+
+public import Mathlib.Analysis.InnerProductSpace.PiL2
+public import Mathlib.Analysis.Convex.Between
+public import Mathlib.Topology.MetricSpace.HausdorffDimension
+public import Kakeya.Frostman
+public import Kakeya.KatzTao
+public import Kakeya.Uniform
+public import Kakeya.ShadedUniform
+public import Kakeya.Multiplicity
+
+@[expose] public section
+
+def IsBesicovitch (S : Set (EuclideanSpace ℝ (Fin n))) :=
+    IsCompact S ∧ ∀ v, ‖v‖ = 1 → ∃ a, affineSegment ℝ a (a + v) ⊆ S
+
+def KakeyaSetConjecture (n : ℕ) : Prop :=
+  ∀ (S : Set (EuclideanSpace ℝ (Fin n))), IsBesicovitch S → dimH S = n
+
+open MeasureTheory Real Metric
+
+namespace Tube
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+  [FiniteDimensional ℝ E] [Nontrivial E] [MeasurableSpace E] [BorelSpace E]
+  {ι : Type*}
+
+def IsFrostmanAtEveryScale {δ : NNReal} (s : Finset ι) (T : ι → Tube δ E) (C : ENNReal) : Prop :=
+  ∀ ρ : NNReal, δ ≤ ρ → ρ ≤ 1 → ∀ i₀ ∈ s,
+        ConvexSpaceBody.IsFrostmanIn {i ∈ s |
+            (T i).toConvexSpaceBody ≤ ((T i₀).rescale ρ).toConvexSpaceBody}
+          (fun i => (T i).toConvexSpaceBody)
+          ((T i₀).rescale ρ).toConvexSpaceBody C
+
+def UniformTubeSet.IsFrostmanAtEveryScale {δ : NNReal} {s : Finset ι} {T : ι → Tube δ E} {N : ℕ}
+    {C : NNReal} (𝒰 : UniformTubeSet s T N C) (A : ENNReal) : Prop :=
+  ∀ k ≤ N, ∀ j ∈ 𝒰.cover.indexSet k,
+    ConvexSpaceBody.IsFrostmanIn
+      (coverClass s (𝒰.cover.assign k) j)
+      (fun i => (T i).toConvexSpaceBody)
+      (𝒰.cover.tube k j).toConvexSpaceBody A
+
+end Tube
+
+open Tube
+open ShadedTube
+
+namespace StickyKakeya
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+  [FiniteDimensional ℝ E] [Nontrivial E] [MeasurableSpace E] [BorelSpace E]
+  {ι : Type*}
+
+def StickyFrostmanEstimate : Prop :=
+  ∀ ε : ℝ, 0 < ε →
+    ∃ η δ₀ : ℝ, 0 < η ∧ 0 < δ₀ ∧
+      ∀ {δ : NNReal}, 0 < δ → (δ : ℝ) ≤ δ₀ →
+      ∀ {ι : Type*} (s : Finset ι) (V : ι → ShadedTube δ E),
+        (∀ i ∈ s, (V i).carrier ⊆ Metric.closedBall (0 : E) 1) →
+        ∀ {C : NNReal}, C ≤ ssfUniformConst (Module.finrank ℝ E) →
+        ∀ (𝒱 : ShadedUniformTubeSet s V (ssfGridLen δ) C),
+        ENNReal.ofReal ((δ : ℝ) ^ η)
+          ≤ ShadedBody.fullness' s (fun i => (V i).toShadedBody) →
+        𝒱.tubeUniform.IsFrostmanAtEveryScale (ENNReal.ofReal ((δ : ℝ) ^ (-η))) →
+        ENNReal.ofReal ((δ : ℝ) ^ ε) ≤ volume (⋃ i ∈ s, (V i).shade)
+
+def StickyFrostmanHypothesis.{uE, uI} : Prop :=
+  ∀ {E : Type uE} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    [FiniteDimensional ℝ E] [Nontrivial E] [MeasurableSpace E] [BorelSpace E],
+    Module.finrank ℝ E = 3 → StickyFrostmanEstimate.{uE, uI} (E := E)
+
+end StickyKakeya
+
+theorem KakeyaDimensionThree (hSFE : StickyKakeya.StickyFrostmanHypothesis.{0, 0}) :
+    KakeyaSetConjecture 3 := @@COMPARATOR_TARGET_PROOF@@

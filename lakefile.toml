@@ -1,0 +1,51 @@
+name = "kakeya"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["Kakeya", "FinalCheck"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+# Style linters switched off for this development, with the reason in each case.
+# Line length: most over-long lines are continuation lines of a single mathematical
+# expression, where folding further hurts rather than helps readability.
+weak.linter.style.longLine = false
+# `show` is used deliberately to name the intermediate goal at the points where the
+# argument changes shape.
+weak.linter.style.show = false
+# `open scoped Classical` is used throughout; replacing it by the `classical` tactic
+# at every site would be a large and purely stylistic change.
+weak.linter.style.openClassical = false
+# The `set_option` and `maxHeartbeats` linters ask for a justifying comment at every
+# site; the budgets here are per-proof and are recorded by the profiling data instead.
+weak.linter.style.setOption = false
+weak.linter.style.maxHeartbeats = false
+# The flexible-tactic linter encodes a stylistic preference about what may follow `simp`.
+weak.linter.flexible = false
+maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+
+[[require]]
+name = "checkdecls"
+git = "https://github.com/PatrickMassot/checkdecls.git"
+
+# [[require]]
+# name = "«doc-gen4»"
+# git = "https://github.com/leanprover/doc-gen4"
+# rev = "main"
+[[lean_lib]]
+name = "Kakeya"
+
+[[lean_lib]]
+name = "FinalCheck"
+
+# The unconditional linking layer. It is deliberately NOT a default target: it
+# imports a second, external development that this repository does not vendor.
+# See README.md, "The unconditional result", for how to build and check it.
+[[lean_lib]]
+name = "Unconditional"

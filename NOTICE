@@ -2,14 +2,20 @@ Kakeya in Dimension Three
 
 This distribution contains Lean source from Project Numina's Kakeya project.
 Copyright (c) 2026 Project Numina. Existing per-file author and copyright
-notices remain authoritative.
+notices remain authoritative. Project contributors are listed in CONTRIBUTORS.md.
 
 The mathematical argument is due to Larry Guth, Hong Wang and Joshua Zahl,
-building on the Wang-Zahl Kakeya work. The three-dimensional Sticky Frostman
-estimate is retained as an explicit hypothesis and is not proved by this package.
+building on the Wang-Zahl Kakeya work. The Kakeya library proves a conditional
+result from the three-dimensional Sticky Frostman hypothesis. The Unconditional
+library discharges that hypothesis by linking to the separately obtained
+Nankai University and ByteDance Seed AI4Math formalization.
 
-Software source headers specify Apache License 2.0. See LICENSE and
-ATTRIBUTION.md for license scope and source attribution. The cited papers are
-not included in this distribution and retain their own authorship and licensing.
+Software source headers in this repository specify Apache License 2.0.
+See LICENSE and ATTRIBUTION.md for license scope and source attribution.
+The cited papers are not included in this distribution and retain their own
+authorship and licensing.
 
-Build-time dependencies are distributed separately under their own licenses.
+Build-time dependencies are distributed separately under their own terms.
+The upstream Sticky checkout is not included or relicensed by this repository.
+Its release terms must be confirmed before distributing a combined archive or
+compiled artifacts containing it; see RELEASING.md.

@@ -3,7 +3,7 @@
 Run this after the ordinary build:
 
 ```sh
-bash verification/comparator/run.sh
+bash verification/comparator/run.sh --target conditional
 ```
 
 The script uses the exact tool revisions in `tools.json` and the project's
@@ -44,3 +44,31 @@ Nanoda is disabled and no independent second-kernel result is claimed.
 
 The pinned comparator version is compatible with the project's fixed Lean
 toolchain; its own source and dependency manifest are checked before use.
+
+## Unconditional target
+
+After building and configuring the linking library, run:
+
+```sh
+bash verification/comparator/run.sh --target unconditional --jobs 2
+```
+
+`ChallengeUnconditional.lean.in` states `IsBesicovitch`,
+`KakeyaSetConjecture`, and `KakeyaDimensionThree_of_pureWZ2` using only Mathlib
+imports. `SolutionUnconditional.lean` imports the linked theorem. The runner
+checks the bridge inputs, builds its closure, and runs `AxiomCheck.lean` before
+the comparison. Its receipt includes the clean upstream revision and source
+hash, the current Numina source identity, and the bridge build-receipt hash.
+It checks these identities again after comparison.
+
+The same frozen dependency boundary is checked for both targets. For the
+conditional target it also freezes the lower Numina statement vocabulary;
+the unconditional challenge has no Numina imports. `--challenge-only` compiles
+a specification without claiming a solution check. `--prepare-only` prepares
+the wrapper without claiming a comparator pass.
+
+Use `python3 verification/check.py --scope full --require-clean` to run both
+targets and the build and axiom checks with one aggregate receipt. Release
+publication is waiting for the comparator to be committed. A completed receipt
+must match the release candidate; the presence of these scripts is not evidence
+that the comparator has passed.

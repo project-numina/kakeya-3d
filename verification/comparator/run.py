@@ -14,6 +14,9 @@ import subprocess
 import sys
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from evidence import identity, save_json
+
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 
@@ -153,6 +156,8 @@ def prepare_wrapper(wrapper: Path, target: dict, *, require_main: bool = True) -
     roots.extend(sorted((ROOT / ".lake/packages").glob("*/.lake/build/lib/lean")))
     visited: set[Path] = set()
     for source_root in roots:
+        if not source_root.exists() and not require_main:
+            continue
         if not source_root.resolve().is_relative_to(ROOT):
             raise RuntimeError(f"Build root points outside this repository: {source_root}")
         for source in sorted(source_root.iterdir()):
@@ -178,13 +183,24 @@ def prepare_wrapper(wrapper: Path, target: dict, *, require_main: bool = True) -
     (wrapper / "Challenge.lean").write_text(template.replace(marker, "by sorry"))
 
 
+def bridge_evidence() -> dict:
+    driver = "verification/unconditional/tools/bridge.py"
+    return {"inputs": json.loads(capture([sys.executable, driver, "verify-inputs"])),
+            "build_results_sha256": digest(ROOT / "verification/unconditional/.bridge/build-results.json")}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prepare-only", action="store_true", help="Prepare tools and wrapper; do not claim a comparator result")
     parser.add_argument("--challenge-only", action="store_true", help="Compile only the independent challenge specification")
+    parser.add_argument("--jobs", type=int, default=2)
+    parser.add_argument("--receipt-output", type=Path, help="Also write the final receipt to this path")
     parser.add_argument("--target", choices=sorted(TARGETS), default="conditional",
                         help="Which frozen challenge to replay")
     args = parser.parse_args()
+    if args.jobs < 1:
+        parser.error("--jobs must be positive")
+    project_before = identity(ROOT)
     target = TARGETS[args.target]
     pins = json.loads((HERE / "tools.json").read_text())
     if (ROOT / "lean-toolchain").read_text().strip() != pins["toolchain"]:
@@ -202,12 +218,16 @@ def main() -> int:
     if args.target == "unconditional":
         bridge = ["verification/unconditional/tools/bridge.py"]
         run([sys.executable, *bridge, "verify-inputs"])
-        run([sys.executable, *bridge, "build", "Unconditional"])
+        run([sys.executable, *bridge, "build", "Unconditional", "-j", str(args.jobs)])
+        run([sys.executable, *bridge, "lean", "verification/unconditional/AxiomCheck.lean"])
     comparator, exporter, landrun = prepare_tools(pins)
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     wrapper = ROOT / ".verify-work/comparator" / stamp
     prepare_wrapper(wrapper, target)
+    if identity(ROOT) != project_before:
+        raise RuntimeError("Project sources changed while preparing the comparator.")
     source_before = source_inventory()
+    bridge_before = bridge_evidence() if args.target == "unconditional" else None
     before_digest = hashlib.sha256(json.dumps(source_before, sort_keys=True).encode()).hexdigest()
     try:
         commit = subprocess.check_output(["git", "rev-parse", "--verify", "HEAD"], cwd=ROOT,
@@ -215,6 +235,7 @@ def main() -> int:
     except subprocess.CalledProcessError:
         commit = None
     receipt = {
+        "project": project_before, "bridge": bridge_before,
         "started_at": stamp, "target": args.target, "project_commit": commit,
         "source_status": capture(["git", "status", "--porcelain"]),
         "source_inventory_sha256": before_digest,
@@ -244,9 +265,15 @@ def main() -> int:
     verdict = (wrapper / "comparator.log").read_text().strip().splitlines()
     receipt.update({"finished_at": dt.datetime.now(dt.timezone.utc).isoformat(),
                     "exit_code": process.returncode,
-                    "verdict": verdict[-1] if verdict else "", "source_unchanged": source_before == source_inventory()})
+                    "verdict": verdict[-1] if verdict else "",
+                    "source_unchanged": (source_before == source_inventory()
+                                         and identity(ROOT) == project_before)})
     try:
         receipt["boundary_after"] = verify_boundary()
+        if args.target == "unconditional":
+            receipt["bridge_after"] = bridge_evidence()
+            if receipt["bridge_after"] != bridge_before:
+                raise RuntimeError("Bridge inputs or build receipts changed during comparison.")
         boundary_ok = True
     except (RuntimeError, OSError, subprocess.CalledProcessError) as error:
         boundary_ok = False
@@ -257,6 +284,8 @@ def main() -> int:
     receipt["log_sha256"] = digest(wrapper / "comparator.log")
     receipt["stderr_sha256"] = digest(wrapper / "comparator.err")
     result.write_text(json.dumps(receipt, indent=2) + "\n")
+    if args.receipt_output:
+        save_json(args.receipt_output, receipt)
     print(f"Comparator {receipt['status']}: {receipt['verdict']}", flush=True)
     print(f"Receipt: {result}", flush=True)
     return 0 if passed else (process.returncode or 1)

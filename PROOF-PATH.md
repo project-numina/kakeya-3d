@@ -1,6 +1,6 @@
-# Proof Path and Assumptions
+# Proof path and assumptions
 
-The public theorem is `KakeyaDimensionThree` in
+The conditional endpoint is `KakeyaDimensionThree` in
 `Kakeya/DimensionThree/KakeyaConjecture.lean`. From the sticky Kakeya hypothesis
 below it proves the project's existing `KakeyaSetConjecture 3`, defined in
 `Kakeya/IsBesicovitch.lean` for compact Besicovitch sets in
@@ -24,14 +24,13 @@ The bootstrap obtains the Katz-Tao estimate at every positive exponent up to
 one. The shaded estimate and Hausdorff reduction then give the dimension lower
 bound; the ambient dimension supplies the upper bound.
 
-## Exact Sticky Boundary
+## Exact sticky boundary
 
-The project declares no axiom. Its one external input is the hypothesis
+The `Kakeya` library declares no axiom. Its external mathematical input is the hypothesis
 `StickyKakeya.StickyFrostmanHypothesis`: from an explicit proof
 `hdim : Module.finrank Real E = 3` it yields
 `StickyKakeya.StickyFrostmanEstimate (E := E)` for the specified finite-dimensional
-real inner-product space with its Borel measurable structure. Every declaration in
-the table above carries it as an explicit argument.
+real inner-product space with its Borel measurable structure. The conditional endpoint carries it as an explicit argument.
 
 The predicate `StickyKakeya.StickyFrostmanEstimate` itself is defined for general
 ambient dimension; nothing here asserts it outside dimension three. The
@@ -47,7 +46,31 @@ The final argument therefore proves the displayed Kakeya conclusion conditional
 on this three-dimensional Sticky input and Lean's standard three axioms.
 An axiom check does not constitute a proof of the Sticky input.
 
-## Reading the Development
+## Discharging the sticky input
+
+The `Unconditional` library links the conditional endpoint to the separately
+obtained upstream proof at the revision in
+`verification/unconditional/bridge-lock.json`.
+
+| Stage | Lean declaration | Source module |
+| --- | --- | --- |
+| Wang-Zahl Theorem 5.2 | `Kakeya.Assouad.PureWZ2Theorem5_2Unconditional` | Upstream `MyLeanRepo.Kakeya.Assouad.PureWZ2.Theorem5_2Unconditional` |
+| Convert the upstream estimate to the Numina sticky hypothesis | `stickyFrostmanHypothesis_of_pureWZ2` | `Unconditional.StickyFrostman` |
+| Apply the conditional Numina theorem | `KakeyaDimensionThree_of_pureWZ2` | `Unconditional.KakeyaConjecture` |
+
+The conversion is needed because the two developments use different cover and
+Frostman formulations. The final theorem has type `KakeyaSetConjecture 3` and
+carries no sticky hypothesis. `verification/unconditional/AxiomCheck.lean`
+asserts that both linking endpoints depend on exactly `propext`,
+`Classical.choice`, and `Quot.sound`.
+
+The default Lake build checks the conditional library and `FinalCheck`.
+The full command in [RELEASING.md](RELEASING.md) also builds the upstream import
+closure and linking library, runs their axiom assertions, and compares the final
+theorem against a separately written Mathlib-only statement. A successful source
+scan alone does not establish any of these compiler or comparator results.
+
+## Reading the development
 
 The Lean entry files above identify the main steps and their formal statements.
 For the mathematical exposition, see Guth, Wang and Zahl's

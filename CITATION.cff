@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: >-
+  Cite this software using the metadata below and include the commit used.
+  Release and archive identifiers will be added after the comparator is committed
+  and the release checks pass.
+type: software
+title: Kakeya in Dimension Three
+repository-code: https://github.com/project-numina/kakeya-3d
+url: https://github.com/project-numina/kakeya-3d
+license: Apache-2.0
+abstract: >-
+  A Lean 4 formalization following Guth, Wang, and Zahl. The Kakeya library proves
+  the three-dimensional conjecture from a Sticky Frostman hypothesis. The
+  Unconditional library discharges that hypothesis using the separately obtained
+  Nankai University and ByteDance Seed AI4Math development.
+authors:
+  - family-names: Bailey
+    given-names: Bolton
+  - family-names: Li
+    given-names: Jia
+  - family-names: Wang
+    given-names: Jiaqi
+  - family-names: Liu
+    given-names: Junqi
+  - family-names: Asher
+    given-names: Justin
+  - family-names: Pellegrino
+    given-names: Pietro
+  - family-names: Qiu
+    given-names: Ruichen
+  - family-names: Li
+    given-names: Wenda
+  - family-names: Ma
+    given-names: Xiao
+  - family-names: Cao
+    given-names: Yichuan
+  - family-names: Huang
+    given-names: Yihe
+  - family-names: Li
+    given-names: Yunfei
+  - family-names: Xie
+    given-names: Yunzhou
+  - family-names: Zhu
+    given-names: Zekai
+  - family-names: Zhou
+    given-names: Zihao
+  - family-names: He
+    given-names: Weikun

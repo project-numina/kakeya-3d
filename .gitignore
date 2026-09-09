@@ -4,5 +4,6 @@
 __pycache__/
 *.pyc
 
-/upstream/
+/upstream/*
+!/upstream/3d-sticky-kakeya
 /verification/unconditional/.bridge/

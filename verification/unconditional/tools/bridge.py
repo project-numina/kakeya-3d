@@ -21,6 +21,7 @@ LOCK = json.loads((ROOT / "bridge-lock.json").read_text())
 PACKAGES = json.loads((ROOT / "dependency-lock.json").read_text())["packages"]
 PATCHES = json.loads((ROOT / "compatibility/patches.json").read_text())
 IMPORT = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([^\n]+)", re.M)
+SUBMODULE = "upstream/3d-sticky-kakeya"
 
 
 def digest(path):
@@ -46,6 +47,17 @@ def configuration():
     return json.loads(path.read_text())
 
 
+def submodule_revision(root, path):
+    """The revision this repository records for `path`, or None when it is not a submodule."""
+    try:
+        entry = git(root, "ls-files", "-s", "--", path)
+    except subprocess.CalledProcessError:
+        return None
+    if not entry or not entry.startswith("160000 "):
+        return None
+    return entry.split()[1]
+
+
 def verify_inputs(config):
     identities = {}
     if digest(ROOT / "dependency-lock.json") != LOCK["numina_manifest_sha256"]:
@@ -56,6 +68,12 @@ def verify_inputs(config):
         raise RuntimeError(
             f"bytedance must be a clean checkout at {LOCK['bytedance_commit']}: {path}")
     identities["bytedance"] = head
+    recorded = submodule_revision(Path(config["numina"]), SUBMODULE)
+    if recorded is not None and recorded != LOCK["bytedance_commit"]:
+        raise RuntimeError(
+            f"The {SUBMODULE} submodule records {recorded}, not the reviewed pin "
+            f"{LOCK['bytedance_commit']}. Update the lock and re-verify, or reset the submodule.")
+    identities["bytedance_submodule"] = recorded
     manifest = Path(config["numina"]) / "lake-manifest.json"
     if digest(manifest) != LOCK["numina_manifest_sha256"]:
         raise RuntimeError("The Numina dependency manifest differs from the lock.")

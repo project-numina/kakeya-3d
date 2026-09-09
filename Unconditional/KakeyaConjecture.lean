@@ -15,6 +15,11 @@ Part of the linking layer that discharges
 `StickyKakeya.StickyFrostmanHypothesis`.
 -/
 
-/-- The original Numina three-dimensional Kakeya set conjecture via pure WZ2. -/
-theorem KakeyaDimensionThree_of_pureWZ2 : KakeyaSetConjecture 3 := by
-  exact KakeyaDimensionThree stickyFrostmanHypothesis_of_pureWZ2.{0, 0}
+namespace Unconditional
+
+/-- The original Numina three-dimensional Kakeya set conjecture via pure WZ2, with the
+sticky hypothesis of the root-level `KakeyaDimensionThree` discharged. -/
+theorem KakeyaDimensionThree : KakeyaSetConjecture 3 := by
+  exact _root_.KakeyaDimensionThree stickyFrostmanHypothesis_of_pureWZ2.{0, 0}
+
+end Unconditional

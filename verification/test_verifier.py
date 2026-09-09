@@ -115,6 +115,8 @@ class BridgeTests(unittest.TestCase):
         def git(path, *args):
             if args == ("status", "--porcelain"):
                 return ""
+            if args == ("ls-files", "-s", "--", bridge.SUBMODULE):
+                return f"160000 {bridge.LOCK['bytedance_commit']} 0\t{bridge.SUBMODULE}"
             return bridge.LOCK["bytedance_commit"]
         current = {"commit": "new-project-commit", "status": "", "source_sha256": "source"}
         def compiler(command, **kwargs):
@@ -129,6 +131,16 @@ class BridgeTests(unittest.TestCase):
             self.assertEqual(bridge.main(), 0)
         recorded = json.loads((self.state / "input-identities.json").read_text())
         self.assertEqual(recorded["numina"], current)
+        self.assertEqual(recorded["bytedance_submodule"], bridge.LOCK["bytedance_commit"])
+
+    def test_wrong_recorded_submodule_revision_is_rejected(self):
+        def git(path, *args):
+            return "" if args == ("status", "--porcelain") else bridge.LOCK["bytedance_commit"]
+        with patch.object(bridge, "identity", return_value={}), \
+                patch.object(bridge, "git", side_effect=git), \
+                patch.object(bridge, "submodule_revision", return_value="wrong-pin"):
+            with self.assertRaisesRegex(RuntimeError, "submodule records wrong-pin"):
+                bridge.verify_inputs(self.config)
 
     def test_wrong_upstream_revision_is_rejected(self):
         with patch.object(bridge, "identity", return_value={}), \
@@ -175,6 +187,61 @@ class BridgeTests(unittest.TestCase):
         self.assertIn("Kakeya.Base", first["dependencies"])
         private.write_text("changed private")
         self.assertNotEqual(first, bridge.inputs(self.config, "Unconditional.Test"))
+
+
+class SubmoduleIdentityTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.upstream = self.root / "upstream"
+        self.project = self.root / "project"
+        self.checkout = self.root / "checkout"
+        for root in (self.upstream, self.project):
+            root.mkdir()
+            self.git(root, "init", "-q")
+            (root / "Example.lean").write_text("def value := 1\n")
+            self.git(root, "add", ".")
+            self.git(root, "commit", "-qm", "Fixture")
+        self.pin = self.git(self.upstream, "rev-parse", "HEAD")
+        self.git(self.project, "-c", "protocol.file.allow=always", "submodule", "add", "-q",
+                 str(self.upstream), bridge.SUBMODULE)
+        self.git(self.project, "commit", "-qam", "Add upstream fixture")
+        self.git(self.root, "clone", "-q", "--no-local", str(self.project), str(self.checkout))
+
+    @staticmethod
+    def git(root, *args):
+        return subprocess.check_output(
+            ["git", "-C", str(root), "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+             "-c", "commit.gpgsign=false", *args], text=True, stderr=subprocess.PIPE).strip()
+
+    def test_fresh_clone_has_same_identity_before_and_after_submodule_init(self):
+        before = evidence.identity(self.checkout)
+        self.assertEqual(before["status"], "")
+        self.assertEqual(bridge.submodule_revision(self.checkout, bridge.SUBMODULE), self.pin)
+        self.git(self.checkout, "-c", "protocol.file.allow=always", "submodule", "update", "--init",
+                 bridge.SUBMODULE)
+        self.assertEqual(evidence.identity(self.checkout), before)
+        upstream = self.checkout / bridge.SUBMODULE
+        self.assertEqual(evidence.identity(upstream)["commit"], self.pin)
+
+    def test_staged_submodule_pin_changes_source_identity(self):
+        before = evidence.identity(self.checkout)
+        (self.upstream / "Example.lean").write_text("def value := 2\n")
+        self.git(self.upstream, "commit", "-qam", "Change upstream fixture")
+        pin = self.git(self.upstream, "rev-parse", "HEAD")
+        self.git(self.checkout, "update-index", "--cacheinfo", f"160000,{pin},{bridge.SUBMODULE}")
+        after = evidence.identity(self.checkout)
+        self.assertEqual(before["commit"], after["commit"])
+        self.assertNotEqual(before["source_sha256"], after["source_sha256"])
+        self.assertEqual(bridge.submodule_revision(self.checkout, bridge.SUBMODULE), pin)
+
+    def test_submodule_symlink_is_rejected(self):
+        path = self.checkout / bridge.SUBMODULE
+        path.rmdir()
+        path.symlink_to(self.upstream, target_is_directory=True)
+        with self.assertRaisesRegex(RuntimeError, "symlink or escapes"):
+            evidence.inventory(self.checkout)
 
 
 class OrchestrationTests(unittest.TestCase):

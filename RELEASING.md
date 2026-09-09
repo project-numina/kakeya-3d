@@ -12,8 +12,7 @@ From a fresh checkout of the commit to verify:
 
 ```sh
 lake exe cache get
-git clone https://github.com/M32026/3d-sticky-kakeya upstream/3d-sticky-kakeya
-git -C upstream/3d-sticky-kakeya checkout 42f739b484fd055e0aa29601c35677ad996f2ef2
+git submodule update --init upstream/3d-sticky-kakeya
 python3 verification/check.py --scope full --require-clean --jobs 2
 ```
 
@@ -48,6 +47,8 @@ with a `result.json` and stage logs. A full successful run also copies both
 comparator receipts there. The main receipt records the commit, dirty state,
 source inventory hash, upstream identity, toolchain, stage exit codes, log
 hashes, elapsed time, machine details, and free disk space before and after.
+The project inventory includes the recorded submodule revision. Full verification
+also hashes the files in the upstream checkout.
 A source change during verification fails the run. Use `--require-clean` for
 receipts tied to a committed snapshot; a passing development run with a dirty
 source tree is not attributed to its HEAD commit alone.

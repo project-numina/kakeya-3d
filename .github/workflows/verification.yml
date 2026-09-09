@@ -71,11 +71,7 @@ jobs:
           use-mathlib-cache: 'true'
           use-github-cache: 'false'
       - name: Obtain pinned upstream sources
-        shell: bash
-        run: |
-          git clone https://github.com/M32026/3d-sticky-kakeya upstream/3d-sticky-kakeya
-          revision=$(python3 -c 'import json; print(json.load(open("verification/unconditional/bridge-lock.json"))["bytedance_commit"])')
-          git -C upstream/3d-sticky-kakeya checkout "$revision"
+        run: git submodule update --init upstream/3d-sticky-kakeya
       - run: python3 verification/check.py --scope full --require-clean --jobs 2
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

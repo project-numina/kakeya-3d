@@ -17,7 +17,18 @@ def capture(root, *args):
 
 
 def inventory(root):
+    """Hash project files and record submodule pins without entering submodules."""
     root = Path(root).resolve()
+    entries = subprocess.check_output(
+        ["git", "ls-files", "--stage", "-z"], cwd=root).decode().split("\0")
+    submodules = {}
+    for entry in filter(None, entries):
+        metadata, name = entry.split("\t", 1)
+        mode, revision, stage = metadata.split()
+        if mode == "160000":
+            if stage != "0":
+                raise RuntimeError(f"Unresolved submodule conflict: {name}")
+            submodules[name] = revision
     names = subprocess.check_output(
         ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         cwd=root).decode().split("\0")
@@ -26,7 +37,7 @@ def inventory(root):
         path = root / name
         if path.is_symlink() or not path.resolve().is_relative_to(root):
             raise RuntimeError(f"Source path is a symlink or escapes the checkout: {name}")
-        result[name] = digest(path)
+        result[name] = f"gitlink:{submodules[name]}" if name in submodules else digest(path)
     if not result:
         raise RuntimeError(f"No source files found in {root}")
     return result

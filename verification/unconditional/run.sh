@@ -28,7 +28,7 @@ done
 
 if [ ! -d "$upstream" ]; then
   echo "Missing upstream checkout: $upstream" >&2
-  echo "See README.md for the pinned clone command, or pass --upstream DIR." >&2
+  echo "See README.md for the submodule setup command, or pass --upstream DIR." >&2
   exit 1
 fi
 

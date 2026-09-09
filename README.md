@@ -68,6 +68,7 @@ and resource requirements.
 | `Unconditional.lean` | Import root of the linking layer |
 | `verification/` | Source, axiom and comparator checks |
 | `verification/unconditional/` | Build and check tooling for the linking layer |
+| `upstream/3d-sticky-kakeya` | Submodule reference to the second development |
 
 The repository contains the Kakeya mathematical development and its maintained
 verification tools. See [ATTRIBUTION.md](ATTRIBUTION.md) for mathematical
@@ -99,18 +100,20 @@ The `Unconditional/` library closes that gap. Its endpoints are
 | `Unconditional.KakeyaDimensionThree` | `Unconditional/KakeyaConjecture.lean` |
 
 `Unconditional` is not a default build target, because it imports the second
-development and this repository does not vendor it. Obtain that development into
-`upstream/` (which is not tracked here) and run one command:
+development. That development is not vendored here: `upstream/3d-sticky-kakeya`
+is a Git submodule recording only its URL and the reviewed revision. Fetch it and
+run one command:
 
 ```sh
-git clone https://github.com/M32026/3d-sticky-kakeya upstream/3d-sticky-kakeya
-git -C upstream/3d-sticky-kakeya checkout 42f739b484fd055e0aa29601c35677ad996f2ef2
+git submodule update --init upstream/3d-sticky-kakeya
 python3 verification/check.py --scope full --jobs 2
 ```
 
-Pass `--upstream DIR` if you keep it elsewhere. The command checks the current
-Numina source identity and the pinned upstream checkout, builds `Unconditional`,
-and asserts the axiom closure of both endpoints through
+Pass `--upstream DIR` if you keep a checkout elsewhere. The recorded revision must
+match `bytedance_commit` in `verification/unconditional/bridge-lock.json`; the
+build refuses to proceed otherwise. The command checks the current Numina source
+identity and the pinned upstream checkout, builds `Unconditional`, and asserts
+the axiom closure of both endpoints through
 `verification/unconditional/AxiomCheck.lean`, which must report exactly
 
 ```

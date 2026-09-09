@@ -26,6 +26,7 @@ PACKAGES = json.loads((ROOT / "dependency-lock.json").read_text())["packages"]
 PATCHES = json.loads((ROOT / "compatibility/patches.json").read_text())
 PATCH_MODULES = {patch["module"] for patch in PATCHES}
 IMPORT = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([^\n]+)", re.M)
+SUBMODULE = "upstream/3d-sticky-kakeya"
 
 
 def digest(path):
@@ -51,6 +52,17 @@ def configuration():
     return json.loads(path.read_text())
 
 
+def submodule_revision(root, path):
+    """The revision this repository records for `path`, or None when it is not a submodule."""
+    try:
+        entry = git(root, "ls-files", "-s", "--", path)
+    except subprocess.CalledProcessError:
+        return None
+    if not entry or not entry.startswith("160000 "):
+        return None
+    return entry.split()[1]
+
+
 def verify_inputs(config):
     identities = {"numina": identity(Path(config["numina"]))}
     if digest(ROOT / "dependency-lock.json") != LOCK["numina_manifest_sha256"]:
@@ -64,6 +76,12 @@ def verify_inputs(config):
     identities["upstream_source"] = identity(path)
     if (Path(config["numina"]) / "lean-toolchain").read_text().strip() != LOCK["toolchain"]:
         raise RuntimeError("The Numina toolchain differs from the lock.")
+    recorded = submodule_revision(Path(config["numina"]), SUBMODULE)
+    if recorded is not None and recorded != LOCK["bytedance_commit"]:
+        raise RuntimeError(
+            f"The {SUBMODULE} submodule records {recorded}, not the reviewed pin "
+            f"{LOCK['bytedance_commit']}. Update the lock and re-verify, or reset the submodule.")
+    identities["bytedance_submodule"] = recorded
     manifest = Path(config["numina"]) / "lake-manifest.json"
     if digest(manifest) != LOCK["numina_manifest_sha256"]:
         raise RuntimeError("The Numina dependency manifest differs from the lock.")

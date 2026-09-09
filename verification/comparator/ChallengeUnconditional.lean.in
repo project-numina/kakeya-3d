@@ -18,4 +18,4 @@ def IsBesicovitch (S : Set (EuclideanSpace ℝ (Fin n))) :=
 def KakeyaSetConjecture (n : ℕ) : Prop :=
   ∀ (S : Set (EuclideanSpace ℝ (Fin n))), IsBesicovitch S → dimH S = n
 
-theorem KakeyaDimensionThree_of_pureWZ2 : KakeyaSetConjecture 3 := @@COMPARATOR_TARGET_PROOF@@
+theorem Unconditional.KakeyaDimensionThree : KakeyaSetConjecture 3 := @@COMPARATOR_TARGET_PROOF@@

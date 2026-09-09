@@ -4,7 +4,7 @@ This is a standalone Lean 4 formalization of the three-dimensional Kakeya
 argument following Guth, Wang and Zahl: every compact set in real Euclidean
 three-space containing a unit segment in every direction has Hausdorff
 dimension three. The statement is reached in two layers. `KakeyaDimensionThree`
-proves it from one explicit mathematical input, and `KakeyaDimensionThree_of_pureWZ2`
+proves it from one explicit mathematical input, and `Unconditional.KakeyaDimensionThree`
 discharges that input, so the conjecture is obtained with no hypothesis, no
 `sorry` and no project axiom.
 
@@ -20,7 +20,7 @@ The hypothesis is discharged by the `Unconditional` library in this repository,
 which yields
 
 ```lean
-theorem KakeyaDimensionThree_of_pureWZ2 : KakeyaSetConjecture 3
+theorem Unconditional.KakeyaDimensionThree : KakeyaSetConjecture 3
 ```
 
 with no `sorry` and no project axiom. See
@@ -95,7 +95,7 @@ The `Unconditional/` library closes that gap. Its endpoints are
 | Declaration | Module |
 | --- | --- |
 | `stickyFrostmanHypothesis_of_pureWZ2` | `Unconditional/StickyFrostman.lean` |
-| `KakeyaDimensionThree_of_pureWZ2` | `Unconditional/KakeyaConjecture.lean` |
+| `Unconditional.KakeyaDimensionThree` | `Unconditional/KakeyaConjecture.lean` |
 
 `Unconditional` is not a default build target, because it imports the second
 development and this repository does not vendor it. Obtain that development into

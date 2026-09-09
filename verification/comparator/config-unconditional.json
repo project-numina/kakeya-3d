@@ -2,7 +2,7 @@
   "challenge_module": "Challenge",
   "solution_module": "Solution",
   "theorem_names": [
-    "KakeyaDimensionThree_of_pureWZ2"
+    "Unconditional.KakeyaDimensionThree"
   ],
   "permitted_axioms": [
     "propext",

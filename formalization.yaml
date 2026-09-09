@@ -139,7 +139,7 @@ status:
       literature_dependencies:
         - statement: "The three-dimensional Sticky Frostman hypothesis"
           source: "The Assouad dimension of Kakeya sets in ℝ³"
-    - declaration: "KakeyaDimensionThree_of_pureWZ2"
+    - declaration: "Unconditional.KakeyaDimensionThree"
       file: "Unconditional/KakeyaConjecture.lean"
       sorry_count: 0
       axioms:
@@ -202,7 +202,7 @@ alignment:
       module: "Kakeya.Sticky"
       status: "literature-dependency"
     - source: "Three-dimensional Kakeya set conjecture, unconditionally"
-      lean: "KakeyaDimensionThree_of_pureWZ2"
+      lean: "Unconditional.KakeyaDimensionThree"
       module: "Unconditional.KakeyaConjecture"
       status: "proved"
 

@@ -56,7 +56,7 @@ obtained upstream proof at the revision in
 | --- | --- | --- |
 | Wang-Zahl Theorem 5.2 | `Kakeya.Assouad.PureWZ2Theorem5_2Unconditional` | Upstream `MyLeanRepo.Kakeya.Assouad.PureWZ2.Theorem5_2Unconditional` |
 | Convert the upstream estimate to the Numina sticky hypothesis | `stickyFrostmanHypothesis_of_pureWZ2` | `Unconditional.StickyFrostman` |
-| Apply the conditional Numina theorem | `KakeyaDimensionThree_of_pureWZ2` | `Unconditional.KakeyaConjecture` |
+| Apply the conditional Numina theorem | `Unconditional.KakeyaDimensionThree` | `Unconditional.KakeyaConjecture` |
 
 The conversion is needed because the two developments use different cover and
 Frostman formulations. The final theorem has type `KakeyaSetConjecture 3` and

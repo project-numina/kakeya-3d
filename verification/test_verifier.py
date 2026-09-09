@@ -245,7 +245,7 @@ class OrchestrationTests(unittest.TestCase):
         self.assertTrue(imports)
         self.assertTrue(all(name.startswith("Mathlib.") for name in imports))
         config = json.loads((PROJECT / "verification/comparator/config-unconditional.json").read_text())
-        self.assertIn("KakeyaDimensionThree_of_pureWZ2", json.dumps(config))
+        self.assertEqual(config["theorem_names"], ["Unconditional.KakeyaDimensionThree"])
 
     def test_bridge_shell_selects_toolchain_from_project_directory(self):
         with tempfile.TemporaryDirectory() as directory:

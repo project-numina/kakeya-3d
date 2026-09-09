@@ -54,7 +54,7 @@ bash verification/comparator/run.sh --target unconditional --jobs 2
 ```
 
 `ChallengeUnconditional.lean.in` states `IsBesicovitch`,
-`KakeyaSetConjecture`, and `KakeyaDimensionThree_of_pureWZ2` using only Mathlib
+`KakeyaSetConjecture`, and `Unconditional.KakeyaDimensionThree` using only Mathlib
 imports. `SolutionUnconditional.lean` imports the linked theorem. The runner
 checks the bridge inputs, builds its closure, and runs `AxiomCheck.lean` before
 the comparison. Its receipt includes the clean upstream revision and source

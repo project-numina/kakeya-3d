@@ -3,15 +3,19 @@
 
 import argparse
 import concurrent.futures
+import functools
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
 import shlex
-import shutil
 import subprocess
 import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from evidence import identity
+from scan import code_only
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = ROOT / ".bridge"
@@ -20,6 +24,7 @@ OVERLAY = STATE / "compatibility"
 LOCK = json.loads((ROOT / "bridge-lock.json").read_text())
 PACKAGES = json.loads((ROOT / "dependency-lock.json").read_text())["packages"]
 PATCHES = json.loads((ROOT / "compatibility/patches.json").read_text())
+PATCH_MODULES = {patch["module"] for patch in PATCHES}
 IMPORT = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([^\n]+)", re.M)
 SUBMODULE = "upstream/3d-sticky-kakeya"
 
@@ -59,7 +64,7 @@ def submodule_revision(root, path):
 
 
 def verify_inputs(config):
-    identities = {}
+    identities = {"numina": identity(Path(config["numina"]))}
     if digest(ROOT / "dependency-lock.json") != LOCK["numina_manifest_sha256"]:
         raise RuntimeError("The committed dependency lock differs from the Numina pin.")
     path = Path(config["bytedance"])
@@ -68,6 +73,9 @@ def verify_inputs(config):
         raise RuntimeError(
             f"bytedance must be a clean checkout at {LOCK['bytedance_commit']}: {path}")
     identities["bytedance"] = head
+    identities["upstream_source"] = identity(path)
+    if (Path(config["numina"]) / "lean-toolchain").read_text().strip() != LOCK["toolchain"]:
+        raise RuntimeError("The Numina toolchain differs from the lock.")
     recorded = submodule_revision(Path(config["numina"]), SUBMODULE)
     if recorded is not None and recorded != LOCK["bytedance_commit"]:
         raise RuntimeError(
@@ -88,9 +96,11 @@ def verify_inputs(config):
     if not conditional.is_file():
         raise RuntimeError(f"Compile the conditional library first (lake build Kakeya): {conditional}")
     version = subprocess.check_output([config["lean"], "--version"], text=True).strip()
-    if "4.32.0-rc1" not in version:
+    compiler_commit = subprocess.check_output([config["lean"], "--githash"], text=True).strip()
+    if compiler_commit != LOCK["lean_githash"]:
         raise RuntimeError(f"Wrong Lean compiler: {version}")
     identities["compiler"] = version
+    identities["compiler_sha256"] = digest(Path(config["lean"]))
     return identities
 
 
@@ -126,12 +136,25 @@ def environment(config):
 def source(config, module):
     relative = Path(module.replace(".", "/") + ".lean")
     overlay = OVERLAY / relative
-    if overlay.exists():
+    if module in PATCH_MODULES and overlay.exists():
         return overlay, OVERLAY
     namespace = module.split(".")[0]
     base = {"Unconditional": Path(config["numina"]),
             "MyLeanRepo": Path(config["bytedance"])}.get(namespace)
     return (base / relative, base) if base else (None, None)
+
+
+@functools.lru_cache(maxsize=8192)
+def parsed_imports(path, stamp):
+    clean = code_only(path.read_text(encoding="utf-8"))
+    return {name for line in IMPORT.findall(clean) for name in line.split()
+            if re.fullmatch(r"[A-Za-z0-9_.]+", name)}
+
+
+def imports(config, module):
+    path, _ = source(config, module)
+    stat = path.stat()
+    return parsed_imports(path, (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns))
 
 
 def closure(config, modules):
@@ -143,9 +166,7 @@ def closure(config, modules):
             return
         if not path.is_file():
             raise RuntimeError(f"Missing source module {module}: {path}")
-        imported = [name for line in IMPORT.findall(path.read_text())
-                    for name in line.split("--")[0].split()
-                    if re.fullmatch(r"[A-Za-z0-9_.]+", name)]
+        imported = imports(config, module)
         graph[module] = {name for name in imported if source(config, name)[0] is not None}
         for name in sorted(graph[module]):
             visit(name)
@@ -169,78 +190,57 @@ def options_for(module):
     return []
 
 
-def receipt(config, module, graph, exit_code=0):
+HASHES = {}
+
+
+def artifact_hashes(path):
+    """Include the private and IR fragments consumed by Lean 4.32."""
+    result = {}
+    for suffix in (".olean", ".olean.private", ".olean.server", ".ir"):
+        file = path.with_suffix(suffix)
+        if not file.exists():
+            if suffix == ".olean":
+                raise RuntimeError(f"Missing imported artifact: {file}")
+            result[suffix] = None
+            continue
+        stat = file.stat()
+        stamp = (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+        old = HASHES.get(file)
+        if old is None or old[0] != stamp:
+            HASHES[file] = (stamp, digest(file))
+        result[suffix] = HASHES[file][1]
+    return result
+
+
+def dependency_artifact(config, module):
+    relative = module.replace(".", "/") + ".olean"
+    libraries = environment(config)["LEAN_PATH"].split(os.pathsep)
+    libraries.append(str(Path(config["lean"]).parent.parent / "lib/lean"))
+    for library in libraries:
+        path = Path(library) / relative
+        if path.is_file():
+            return path
+    raise RuntimeError(f"Missing compiled dependency: {module}")
+
+
+def inputs(config, module):
     path, _ = source(config, module)
-    record = {"source_sha256": digest(path), "exit_code": exit_code,
-              "toolchain": LOCK["toolchain"], "options": options_for(module)}
+    return {"source_sha256": digest(path), "toolchain": LOCK["toolchain"],
+            "compiler_sha256": digest(Path(config["lean"])), "options": options_for(module),
+            "dependencies": {name: artifact_hashes(dependency_artifact(config, name))
+                             for name in sorted(imports(config, module) | {"Init"})}}
+
+
+def receipt(config, module, exit_code=0):
+    record = {**inputs(config, module), "exit_code": exit_code}
     if exit_code == 0:
-        record["olean_sha256"] = digest(artifact(module))
-        record["dependencies"] = {name: digest(artifact(name)) for name in graph[module]}
+        record["artifacts"] = artifact_hashes(artifact(module))
     return record
 
 
-def adopt(config, library):
-    graph = closure(config, LOCK["default_modules"])
-    records = {}
-    for module in graph:
-        existing = library / (module.replace(".", "/") + ".olean")
-        if not existing.is_file():
-            raise RuntimeError(f"Verified cache is incomplete: {existing}")
-    for module in graph:
-        relative = Path(module.replace(".", "/"))
-        for suffix in (".olean", ".olean.private", ".olean.server", ".ir", ".ilean"):
-            existing = library / (str(relative) + suffix)
-            if existing.is_file():
-                output = LIB / (str(relative) + suffix)
-                output.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(existing, output)
-    for module in graph:
-        records[module] = receipt(config, module, graph)
-        records[module]["origin"] = "adopted verified integration cache"
-    save_json(STATE / "build-results.json", records)
-    print(f"Adopted {len(records)} modules into {LIB}", flush=True)
-
-
-def seed_upstream(config, library, receipts):
-    verify_inputs(config)
-    overlays(config)
-    approved = {}
-    for path in receipts:
-        for module, record in json.loads(path.read_text()).items():
-            if module.startswith("MyLeanRepo.") and record.get("exit_code") == 0:
-                approved[module] = record
-    graph = closure(config, sorted(approved))
-    if set(graph) != set(approved):
-        raise RuntimeError("Upstream receipts do not cover their complete project import closure.")
-    for module, record in approved.items():
-        path, _ = source(config, module)
-        incoming = library / (module.replace(".", "/") + ".olean")
-        if (record.get("source_sha256") != digest(path)
-                or record.get("olean_sha256") != digest(incoming)
-                or record.get("toolchain") != LOCK["toolchain"]
-                or record.get("options") != options_for(module)):
-            raise RuntimeError(f"Unverified upstream cache receipt: {module}")
-    for module in graph:
-        relative = module.replace(".", "/")
-        for suffix in (".olean", ".olean.private", ".olean.server", ".ir", ".ilean"):
-            incoming = library / (relative + suffix)
-            if incoming.is_file():
-                output = LIB / (relative + suffix)
-                output.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(incoming, output)
-    result_path = STATE / "build-results.json"
-    records = json.loads(result_path.read_text()) if result_path.exists() else {}
-    for module in graph:
-        records[module] = {**receipt(config, module, graph), "origin": "verified upstream receipt handoff"}
-    save_json(result_path, records)
-    summary = {"okay": True, "seeded_upstream_modules": len(graph),
-               "receipt_sha256": [digest(path) for path in receipts]}
-    save_json(STATE / "upstream-handoff.json", summary)
-    print(json.dumps(summary, indent=2), flush=True)
-
-
 def build(config, modules, jobs, rebuild=False):
-    verify_inputs(config)
+    before = verify_inputs(config)
+    save_json(STATE / "input-identities.json", before)
     overlays(config)
     graph = closure(config, modules)
     result_path = STATE / "build-results.json"
@@ -255,9 +255,10 @@ def build(config, modules, jobs, rebuild=False):
         old = records.get(module, {})
         if old.get("exit_code") != 0 or not artifact(module).is_file():
             return False
-        return old == {**old, **receipt(config, module, graph)}
+        return old == {**old, **receipt(config, module)}
 
     def compile_one(module):
+        before_inputs = inputs(config, module)
         path, base = source(config, module)
         output = artifact(module)
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -267,7 +268,10 @@ def build(config, modules, jobs, rebuild=False):
         log = STATE / "logs" / f"{module}.log"
         with log.open("w") as stream:
             result = subprocess.run(command, env=env, stdout=stream, stderr=subprocess.STDOUT)
-        record = receipt(config, module, graph, result.returncode)
+        record = receipt(config, module, result.returncode)
+        if before_inputs != inputs(config, module):
+            record["exit_code"] = 1
+            record["error"] = "Source or imported artifacts changed during compilation."
         record.update({"command": command, "log": str(log)})
         return record
 
@@ -296,6 +300,8 @@ def build(config, modules, jobs, rebuild=False):
                     failed.add(name)
                     print(f"FAIL {name}: {records[name]['log']}", flush=True)
                 save_json(result_path, records)
+    if before != verify_inputs(config):
+        raise RuntimeError("Verification inputs changed during the bridge build.")
     print(json.dumps({"compiled_or_cached": len(done), "failed": sorted(failed),
                       "blocked": sorted(pending)}), flush=True)
     return 1 if failed or pending else 0
@@ -305,20 +311,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="action", required=True)
     configure = sub.add_parser("configure")
-    configure.add_argument("--numina", type=Path, default=ROOT.parent / "kakeya")
-    configure.add_argument("--bytedance", type=Path, default=ROOT.parent / "bd-sticky")
+    configure.add_argument("--numina", type=Path, default=ROOT.parents[1])
+    configure.add_argument("--bytedance", type=Path, default=ROOT.parents[1] / "upstream/3d-sticky-kakeya")
     for name in ("packages", "lean"):
         configure.add_argument("--" + name, type=Path, required=True)
-    configure.add_argument("--verified-cache", type=Path)
     compile_parser = sub.add_parser("build")
     compile_parser.add_argument("modules", nargs="*", default=LOCK["default_modules"])
-    compile_parser.add_argument("-j", "--jobs", type=int, default=8)
+    compile_parser.add_argument("-j", "--jobs", type=int, default=2)
     compile_parser.add_argument("--rebuild", action="store_true", help="Recompile the named roots even when cached.")
     sub.add_parser("environment")
     sub.add_parser("verify-inputs")
-    seed = sub.add_parser("seed-upstream")
-    seed.add_argument("--library", type=Path, required=True)
-    seed.add_argument("--receipts", type=Path, action="append", required=True)
     run_lean = sub.add_parser("lean")
     run_lean.add_argument("arguments", nargs=argparse.REMAINDER)
     args = parser.parse_args()
@@ -332,14 +334,9 @@ def main():
         save_json(STATE / "config.json", config)
         save_json(STATE / "input-identities.json", identities)
         overlays(config)
-        if args.verified_cache:
-            adopt(config, args.verified_cache.resolve())
         print(json.dumps({"configured": str(ROOT), "inputs": identities}, indent=2))
         return 0
     config = configuration()
-    if args.action == "seed-upstream":
-        seed_upstream(config, args.library.resolve(), [path.resolve() for path in args.receipts])
-        return 0
     if args.action == "build":
         if args.jobs < 1:
             parser.error("--jobs must be positive")
@@ -347,6 +344,7 @@ def main():
     if args.action == "verify-inputs":
         print(json.dumps(verify_inputs(config), indent=2))
         return 0
+    verify_inputs(config)
     env = environment(config)
     if args.action == "environment":
         for name in ("LEAN_PATH", "ELAN_TOOLCHAIN", "PATH"):

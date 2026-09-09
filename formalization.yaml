@@ -11,7 +11,22 @@ project:
     that hypothesis against a second, independent development, giving an
     unconditional endpoint.
   authors:
-    - "Project Numina contributors"
+    - "Bolton Bailey"
+    - "Jia Li"
+    - "Jiaqi Wang"
+    - "Junqi Liu"
+    - "Justin Asher"
+    - "Pietro Pellegrino"
+    - "Ruichen Qiu"
+    - "Wenda Li"
+    - "Xiao Ma"
+    - "Yichuan Cao"
+    - "Yihe Huang"
+    - "Yunfei Li"
+    - "Yunzhou Xie"
+    - "Zekai Zhu"
+    - "Zihao Zhou"
+    - "Weikun He"
   responsible_maintainers:
     - "Project Numina"
   license: "Apache-2.0"
@@ -92,8 +107,8 @@ related_formalizations:
     note: >-
       A Lean 4 development by Nankai University and the ByteDance Seed AI4Math
       Team, written independently of this one. It proves Wang-Zahl, The Assouad
-      dimension of Kakeya sets in R^3, Theorem 5.2 unconditionally -- the
-      estimate this repository's main theorem assumes -- and states, without
+      dimension of Kakeya sets in R^3, Theorem 5.2 unconditionally, supplying the
+      estimate this repository's main theorem assumes. It also states, without
       proving, the two Main Lemmas that this repository proves. The two
       developments are complementary and are linked in the Unconditional
       library of this repository, which derives the three-dimensional Sticky
@@ -170,8 +185,10 @@ review:
   status: "self-assessed"
   reviewers: []
   notes: >-
-    The repository includes automated source, build, axiom, and comparator
-    checks. No claim of external peer review is made.
+    The repository includes source, build, axiom, and comparator checks. A
+    configured check is not a completed verification result. Completed runs
+    record the tested source identities and logs as described in RELEASING.md.
+    No claim of external peer review is made.
 
 alignment:
   namespace: "Kakeya"

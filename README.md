@@ -1,4 +1,4 @@
-# Kakeya in Dimension Three
+# Kakeya in dimension three
 
 This is a standalone Lean 4 formalization of the three-dimensional Kakeya
 argument following Guth, Wang and Zahl: every compact set in real Euclidean
@@ -28,17 +28,16 @@ with no `sorry` and no project axiom. See
 second development, which this repository does not vendor and which you download
 yourself.
 
-## Build and Check
+## Build and check
 
-Install [elan](https://github.com/leanprover/elan), Git, Bash, and Python 3.11 or
+Use Linux or WSL2. Install [elan](https://github.com/leanprover/elan), Git, Bash, and Python 3.11 or
 later. The committed `lean-toolchain` selects Lean `v4.32.0-rc1` and
 `lake-manifest.json` fixes all dependency commits, including Mathlib
 `1b0782d8191b03e0001caac10e1601d17f2cd580`.
 
 ```sh
 lake exe cache get
-lake build
-bash verification/run.sh
+python3 verification/check.py --scope core
 ```
 
 The cache download is optional; `lake build` can compile the pinned dependencies
@@ -52,11 +51,13 @@ serve different purposes: the former finds unfinished proof tokens and
 confirms that the sources declare no axiom, while the latter verifies
 elaborated declarations and their actual dependencies.
 
-Comparator setup and its recorded result are documented separately in
-`verification/comparator/README.md`. No independent-kernel result is claimed
-unless a corresponding completed receipt is present.
+This command also runs the verifier regressions and writes logs and a receipt
+under `.verification-results/`. It checks the conditional library. The full
+verification command below adds the linked proof and both comparator targets.
+See [RELEASING.md](RELEASING.md) for reproduction instructions, receipt contents,
+and resource requirements.
 
-## Source Layout
+## Source layout
 
 | Path | Content |
 | --- | --- |
@@ -80,7 +81,7 @@ record which informal statement a Lean declaration corresponds to.
 
 ## The unconditional result
 
-GWZ record that their Theorem 7.3(A) — the hypothesis of `KakeyaDimensionThree` —
+GWZ record that their Theorem 7.3(A), the hypothesis of `KakeyaDimensionThree`,
 is Theorem 5.2 of Wang and Zahl, *The Assouad dimension of Kakeya sets in R3*.
 That theorem has been formalized, unconditionally, by Nankai University and the
 ByteDance Seed AI4Math Team in
@@ -105,14 +106,14 @@ run one command:
 
 ```sh
 git submodule update --init upstream/3d-sticky-kakeya
-bash verification/unconditional/run.sh -j 8
+python3 verification/check.py --scope full --jobs 2
 ```
 
 Pass `--upstream DIR` if you keep a checkout elsewhere. The recorded revision must
-match `bytedance_commit` in `verification/unconditional/bridge-lock.json`, which is
-the reviewed pin; the build refuses to proceed otherwise. The script verifies both
-checkouts against the recorded pins, builds `Unconditional`, and then asserts the
-axiom closure of both endpoints through
+match `bytedance_commit` in `verification/unconditional/bridge-lock.json`; the
+build refuses to proceed otherwise. The command checks the current Numina source
+identity and the pinned upstream checkout, builds `Unconditional`, and asserts
+the axiom closure of both endpoints through
 `verification/unconditional/AxiomCheck.lean`, which must report exactly
 
 ```
@@ -123,28 +124,35 @@ Both sides are compiled against Lean `v4.32.0-rc1` and Mathlib
 `1b0782d8191b03e0001caac10e1601d17f2cd580`. The pinned identities, the five exact
 hash-checked local notation mappings that reconcile renamed Mathlib identifiers,
 and the build driver are in `verification/unconditional/`; its `configure` step
-verifies both checkouts' commits, clean Git state, every package pin and the
-compiler version before building.
+records the Numina commit and source hash, verifies the clean upstream commit
+and every package pin, and checks the exact compiler revision before building.
+The full command then runs the conditional and unconditional comparator targets;
+the latter states the conjecture using Mathlib imports only. Add `--require-clean`
+when producing evidence for a committed release candidate.
 
-Building the linking layer compiles the whole of the second development, which is
-substantially larger than this one; budget accordingly. The `lake build` and
-`verification/` checks described above do not depend on it and remain
-self-contained.
+The first bridge build compiles all 4,706 upstream modules in the endpoint's
+import closure from source; externally built upstream artifacts are not adopted.
+Later runs can reuse artifacts with matching local build receipts. At the default
+`--jobs 2`, budget more than six hours for a first full run. Use a machine with at
+least 24 GB RAM and 25 GB free disk space. `--jobs 8` can reduce build time on
+machines with enough memory for more concurrent compiler processes. See
+[RELEASING.md](RELEASING.md) for resource measurements and receipt details. The
+core verification command does not require the upstream checkout.
 
-## References and Attribution
+## References and attribution
 
 - Guth, Wang and Zahl, [A streamlined proof of the Kakeya conjecture in
   R3](https://arxiv.org/abs/2601.14411). The argument formalized here.
 - Wang and Zahl, [The Assouad dimension of Kakeya sets in
   R3](https://arxiv.org/abs/2401.12337), Invent. Math. 241(1):153-206, 2025.
-  Theorem 5.2 is GWZ Theorem 7.3(A), the estimate this development assumes.
+  Theorem 5.2 is GWZ Theorem 7.3(A), the estimate used by the conditional endpoint.
 - Wang and Zahl, [Volume estimates for unions of convex sets, and the Kakeya
   set conjecture in three dimensions](https://arxiv.org/abs/2502.17655).
 - Wang and Zahl, [Sticky Kakeya sets and the sticky Kakeya
   conjecture](https://arxiv.org/abs/2210.09581).
 - Nankai University and ByteDance Seed AI4Math Team,
   [3d-sticky-kakeya](https://github.com/M32026/3d-sticky-kakeya). Formalization of
-  Wang-Zahl Theorem 5.2, the input this development assumes.
+  Wang-Zahl Theorem 5.2, the input discharged by the linking library.
 
 Lean sources originate in Project Numina's Kakeya development. Existing source
 notices are preserved; see [ATTRIBUTION.md](ATTRIBUTION.md), [NOTICE](NOTICE)
@@ -161,3 +169,10 @@ formalization of Wang-Zahl Theorem 5.2 in
 [3d-sticky-kakeya](https://github.com/M32026/3d-sticky-kakeya), and for their work
 on integrating it with this development, which is what makes the unconditional
 result above possible.
+
+## Contributors and citation
+
+See [CONTRIBUTORS.md](CONTRIBUTORS.md) for the contributor list and
+[CITATION.cff](CITATION.cff) for citation metadata. Until a release is archived,
+cite the repository with the exact commit used. Upstream attribution and the
+pending upstream release terms are recorded in [ATTRIBUTION.md](ATTRIBUTION.md).

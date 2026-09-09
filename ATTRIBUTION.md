@@ -10,12 +10,8 @@ Existing per-file author and copyright notices are preserved.
 
 ## Source provenance
 
-The public Numina source baseline used for this release preparation is
-[`f305ef6555788849c87caa987f161abc990d8c2c`](https://github.com/project-numina/kakeya-3d/commit/f305ef6555788849c87caa987f161abc990d8c2c).
-Its public history begins with that assembled development; the earlier working
-history is not included. Verification receipts record the actual checkout commit
-and a hash of the Git-visible source inventory, so a later release is tied to its
-own sources. This baseline is not a build pin for subsequent Numina commits.
+Verification receipts record the checkout commit and a hash of the Git-visible
+source inventory, so each result is tied to its own sources.
 
 The `Unconditional/` sources link the Numina proof to Nankai University and the
 ByteDance Seed AI4Math Team's
@@ -29,9 +25,8 @@ and resulting SHA-256 hashes and each insertion are recorded in
 
 No tracked license file was found in that pinned upstream revision. This
 repository's Apache-2.0 license does not state the upstream project's terms.
-Record an upstream license or permission reference before a combined release;
-see [RELEASING.md](RELEASING.md). The contributor list here does not replace
-upstream attribution.
+Record an upstream license or permission reference before a combined release.
+The contributor list here does not replace upstream attribution.
 
 ## Dependencies
 

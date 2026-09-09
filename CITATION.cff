@@ -1,8 +1,7 @@
 cff-version: 1.2.0
 message: >-
   Cite this software using the metadata below and include the commit used.
-  Release and archive identifiers will be added after the comparator is committed
-  and the release checks pass.
+
 type: software
 title: Kakeya in Dimension Three
 repository-code: https://github.com/project-numina/kakeya-3d

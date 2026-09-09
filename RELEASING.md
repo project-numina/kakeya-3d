@@ -1,19 +1,14 @@
-# Release preparation
-
-Release publication is deferred until the comparator is committed. A configured
-comparator, a prepared wrapper, or a passing core build is not a full verification
-result. Do not mark the unconditional result as release-verified without a
-completed full receipt for the release candidate.
+# Verification and reproduction
 
 ## Reproduce the checks
 
 The verification scripts support Linux and WSL2 with Bash, Git, Python 3.11 or
-later, and elan. Ubuntu 24.04 is the CI environment. Keep `lean-toolchain` and
+later, and elan. Use Ubuntu 24.04 for CI. Keep `lean-toolchain` and
 `lake-manifest.json` unchanged: they select Lean 4.32.0-rc1 and the reviewed
 package revisions. The upstream checkout must be clean at the commit in
 `verification/unconditional/bridge-lock.json`.
 
-From a fresh checkout of the candidate commit:
+From a fresh checkout of the commit to verify:
 
 ```sh
 lake exe cache get
@@ -23,11 +18,13 @@ python3 verification/check.py --scope full --require-clean --jobs 2
 ```
 
 Use `--upstream DIR` for an existing upstream checkout. Use a fresh project
-checkout for release verification so that project artifacts are compiled from
-source. The pinned Mathlib cache is allowed. Local development runs may reuse
-artifacts built by the bridge; its receipts hash the source, imported artifacts
-(including private and IR fragments), compiler, and options. An external cache
-without matching local build receipts is rebuilt.
+checkout to compile the project artifacts from source. The pinned Mathlib cache
+is allowed. The bridge compiles all 4,706 upstream modules in the endpoint's
+import closure from source on its first run. It does not adopt externally built
+upstream artifacts. Later runs may reuse artifacts built by the bridge; its
+receipts hash the source, imported artifacts (including private and IR
+fragments), compiler, and options. Artifacts without matching local build
+receipts are rebuilt.
 
 The full command runs verifier regressions, the source census, `Kakeya` and
 `FinalCheck`, the upstream closure and `Unconditional`, both endpoint axiom
@@ -40,7 +37,9 @@ python3 verification/check.py --scope core
 
 `verification/run.sh` remains the source census and conditional build check.
 `verification/unconditional/run.sh` checks the linked endpoints after the core
-library is built. Neither command alone runs the comparator.
+library is built. Neither command alone runs the comparator. Both comparator
+targets have passed in review; see the
+[completed checks](verification/comparator/README.md#completed-checks).
 
 ## Evidence and resources
 
@@ -50,43 +49,35 @@ comparator receipts there. The main receipt records the commit, dirty state,
 source inventory hash, upstream identity, toolchain, stage exit codes, log
 hashes, elapsed time, machine details, and free disk space before and after.
 A source change during verification fails the run. Use `--require-clean` for
-release evidence; a passing development run with a dirty source tree is not
-attributed to its HEAD commit alone.
+receipts tied to a committed snapshot; a passing development run with a dirty
+source tree is not attributed to its HEAD commit alone.
 
 `largest_child_peak_rss_kib` is Linux's largest child-process memory high-water
 mark, not the sum of simultaneous compiler processes. It is not a machine RAM
 requirement. Record the runner's RAM and bridge concurrency with the receipt.
-The upstream proof is large; completed full runs are needed before stating
-minimum RAM, disk, or runtime requirements. The default bridge concurrency is
-two processes. Increase it only when the runner has enough memory. The core
-Lake build uses Lake's own scheduling.
 
-The `Verification` workflow checks regressions and the core build on pull
-requests and pushes to `main`. Its manual `full` option runs the full suite on a
-fresh hosted runner and uploads receipts and logs even on failure. If that job
-exceeds the runner's resources or time limit, run the same command on a suitable
-Linux machine and retain the failed CI receipt as well as the completed result.
-The workflow does not publish releases or deposit archives.
+Review measurements found 7.9 GB in `.lake/packages`, 5.3 GB in `.lake/build`,
+and 3.4 GB in `verification/unconditional/.bridge`. The unconditional comparator's
+kernel replay peaked at 15.7 GB RSS. Use at least 24 GB RAM and 25 GB free working
+disk space, with the operating system and toolchain already installed. More RAM
+may be needed when increasing compiler concurrency.
 
-## Before publishing
+The default bridge concurrency is two processes. Budget more than six hours
+for a first full run at `--jobs 2`; elapsed time depends on the machine. A higher
+setting, such as `--jobs 8`, can reduce build time when enough memory is available.
+Subsequent runs can reuse matching local receipts. The core Lake build uses
+Lake's own scheduling.
 
-- Confirm the comparator commit has landed. Run the full suite on the final
-  candidate commit and retain both comparator receipts with `status: pass`.
-  Review the independent challenge statements and the proof path for the paper.
-- Confirm who will maintain the release. Replace the organization-level
-  `responsible_maintainers` entry in `formalization.yaml` with the agreed names.
-- Obtain an upstream license or permission reference for the pinned Sticky
-  development. Record its scope and required notices in `ATTRIBUTION.md` before
-  distributing a combined archive or upstream compiled artifacts. The current
-  pin has no tracked license file; this repository does not assign it one.
-- Check the contributor list, citation metadata, and source provenance with the
-  contributors. Preserve upstream and per-file notices. A software contributor
-  list does not decide a paper's author list.
-- Choose the release version and archive destination. After these gates pass,
-  create an annotated tag for the tested commit, archive the source and
-  verification evidence, and record the archive checksum. Do not include
-  `.lake`, `.verify-work`, or the upstream checkout in a source-only archive.
-- Deposit the approved artifact in the project's chosen persistent archive.
-  Add its version, release date, and identifier to `CITATION.cff` and cite that
-  artifact in the paper. No DOI or completed archive is claimed by the current
-  metadata. If this changes the candidate sources, verify the final commit again.
+The `Verification` workflow runs regressions and the source census on pull
+requests and pushes to `main`. Core and full builds run only through
+`workflow_dispatch` on a self-hosted Linux x64 runner labeled
+`kakeya-verification`. A matching runner must be registered with the resources
+above before dispatching either build. Leave `full` unchecked for core checks;
+select it for the full suite, which has a 24-hour job timeout. Both jobs upload
+receipts and logs even on failure. The same commands can also run directly on a
+suitable Linux machine.
+
+Core build products and packages alone occupy about 13.2 GB. Standard
+[GitHub-hosted Ubuntu runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+have 14 GB disk and 16 GB RAM, so automatic CI is limited to the lightweight
+checks. A hosted core build would need a smaller, measured disk footprint first.

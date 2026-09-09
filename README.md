@@ -54,8 +54,8 @@ elaborated declarations and their actual dependencies.
 This command also runs the verifier regressions and writes logs and a receipt
 under `.verification-results/`. It checks the conditional library. The full
 verification command below adds the linked proof and both comparator targets.
-See [RELEASING.md](RELEASING.md) for receipt contents and release requirements.
-Release publication is waiting for the comparator to be committed and verified.
+See [RELEASING.md](RELEASING.md) for reproduction instructions, receipt contents,
+and resource requirements.
 
 ## Source layout
 
@@ -127,11 +127,14 @@ The full command then runs the conditional and unconditional comparator targets;
 the latter states the conjecture using Mathlib imports only. Add `--require-clean`
 when producing evidence for a committed release candidate.
 
-Building the linking layer compiles the upstream endpoint's import closure,
-which is substantially larger than the Numina library. `--jobs` controls bridge
-compiler concurrency. See [RELEASING.md](RELEASING.md) for the supported
-environment and how to record elapsed time, memory, and disk use. The core
-verification command does not require the upstream checkout.
+The first bridge build compiles all 4,706 upstream modules in the endpoint's
+import closure from source; externally built upstream artifacts are not adopted.
+Later runs can reuse artifacts with matching local build receipts. At the default
+`--jobs 2`, budget more than six hours for a first full run. Use a machine with at
+least 24 GB RAM and 25 GB free disk space. `--jobs 8` can reduce build time on
+machines with enough memory for more concurrent compiler processes. See
+[RELEASING.md](RELEASING.md) for resource measurements and receipt details. The
+core verification command does not require the upstream checkout.
 
 ## References and attribution
 
@@ -154,8 +157,8 @@ and [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-We thank Professor [Hong Wang](https://sites.google.com/view/hongwang/home)
-and Professor [Xiao Ma](https://sites.google.com/view/xiaom-homepage) for their help
+We are deeply grateful to Professor [Hong Wang](https://sites.google.com/view/hongwang/home)
+and Professor [Xiao Ma](https://sites.google.com/view/xiaom-homepage) for their generous help
 and guidance.
 
 We thank the Nankai University and ByteDance Seed AI4Math Team for their

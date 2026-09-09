@@ -68,7 +68,14 @@ a specification without claiming a solution check. `--prepare-only` prepares
 the wrapper without claiming a comparator pass.
 
 Use `python3 verification/check.py --scope full --require-clean` to run both
-targets and the build and axiom checks with one aggregate receipt. Release
-publication is waiting for the comparator to be committed. A completed receipt
-must match the release candidate; the presence of these scripts is not evidence
-that the comparator has passed.
+targets and the build and axiom checks with one aggregate receipt. See
+[RELEASING.md](../../RELEASING.md) for the source-build policy and resource needs.
+
+## Completed checks
+
+The comparator is committed. Review runs of both `conditional` and
+`unconditional` returned `Your solution is okay!` with `exit_code = 0` and
+`source_unchanged = True`. All 4,416 files in the frozen boundary were identical
+before and after each comparison. These results apply to the sources recorded
+in those runs; subsequent runs record their own source identities in receipts.
+The checks used Lean kernel replay with Nanoda disabled.
